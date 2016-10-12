@@ -202,6 +202,41 @@ echo "export PATH=\"\$HOME/vendor/node/bin:\$HOME/bin:\$HOME/node_modules/.bin:\
   fi
 )
 
+#
+# ======= START ===============
+# =============================
+#
+# Upload js source files to bugsnag
+#
+set -x
+
+BSHTTP="https://upload.bugsnag.com/"
+BUGSNAG_FE_TOKEN=`cat conf/application.conf | grep bugsnag.apikey.frontend | awk -F'='  '{print $2}' | perl -ne 'chomp and print'`
+APIKEY="apiKey=$BUGSNAG_FE_TOKEN"
+VERSION="appVersion=1.2.3"
+OVERWRITE="overwrite=true"
+FLAG="-F"
+#STAGING
+CDNROOT="https://d3ttj0ujhc3pi0.cloudfront.net/public/assets/js/dist/"
+#PROD
+# CDNROOT="https://d7wp36vu44dwt.cloudfront.net/public/assets/js/dist/"
+MANIFEST="$$BUILD_DIR/client/gulp/data/js/rev-manifest.json"
+MAPDIR="@$BUILD_DIR/public/assets/js/dev/maps/"
+
+declare -a KEYS=($(cat $MANIFEST | jq -r '[keys[]] | join(" ")'))
+
+for key in ${KEYS[@]}; do
+  VALUE=$(cat $MANIFEST | jq -r --arg k $key '.[$k]')
+  SOURCEMAP="sourceMap=$MAPDIR$key.map"
+  CDNURL="minifiedUrl=$CDNROOT$VALUE"
+  RESPONSE=$(curl $BSHTTP $FLAG $APIKEY $FLAG $VERSION $FLAG $SOURCEMAP $FLAG $CDNURL $FLAG $OVERWRITE | head -n 1| cut -d $' ' -f2)
+  echo "==> Souce map upload response: $RESPONSE"
+done
+
+# ===========================
+# ======= END ===============
+
+
 status "Removing client directory..."
 rm -rf "$BUILD_DIR/client"
 
