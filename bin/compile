@@ -208,6 +208,8 @@ echo "export PATH=\"\$HOME/vendor/node/bin:\$HOME/bin:\$HOME/node_modules/.bin:\
 #
 # Upload js source files to bugsnag
 #
+echo -n "-----> Uploading sourceMap to BugSnag..."
+
 set -x
 
 BSHTTP="https://upload.bugsnag.com/"
